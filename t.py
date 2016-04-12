@@ -53,7 +53,7 @@ class SerialPort():
 	    self.ser.open()
 	except Exception, e:
 	    myLogger.error("error open serial port: " + str(e))
-	    exit()
+	#    exit()
 
 
     def send(self,data):
@@ -118,6 +118,36 @@ class App:
     skoreB = 0
 
     cas = ''		# posledni cas - skutecne hodiny - pouze sekundy
+    cas_hra_default = [20,0]
+    cas_hra = [0,0]    
+
+    tablo_start = 'SS000C0C0CCCCCCCCCCCCC0'	# defaultni retezec
+    tablo_8 = 'SS888888888888888888880'		# test segmentu
+    tablo_head = 'SS'		# predpona retezce na tablo
+    tablo = ''			# retezec ktery se posle na tablo
+    i_sekundy = 2		# cas sekundy
+    i_10sekundy = 3		# cas desitky sekund
+    i_minuty = 4		# minuty
+    i_10minuty = 5		# cas desitky minu
+    i_domaci = 6		# stav domaci jednotky
+    i_10domaci = 7		# stav domaci desitky
+    i_hoste = 8
+    i_10hoste = 9
+    i_trestd1s = 10		# trest domaci1 sekundy
+    i_10trestd1s = 11		# trest domaci1 desitky sekund
+    i_trestd1m = 12		# terst domaci 1 minuty
+    i_tresth1s = 13
+    i_10tresth1s = 14
+    i_tresth1m = 15
+    i_trestd2s = 16
+    i_10trestd2s = 17
+    i_trestd2m = 18
+    i_tresth2s = 19
+    i_10tresth2s = 20
+    i_tresth2 = 21
+    i_sirena = 22 		# index sireny v retezci tablo
+
+    trest = [0,0,0,0,0,0,0,0]	# stav terstu  s,m s,m s,m s,m
 
 #    def __exit__(self, exc_type, exc_value, traceback):
 #	logging.shutdown()
@@ -129,12 +159,10 @@ class App:
 #	myLogger.error(msg)
 #	myLogger.critical(msg)
 
-	self.ser = SerialPort()
+#	self.ser = SerialPort()
 
 	self.cas_hra = cas_hra		# cas v sekundach od zacatku hry
 	self.cas_stop = 1		# 1=hodiny stoji
-
-	self.trest = [10,0,0,1,0,0,0,2] # s,m s,m s,m s,m
 
         self.button = Button(root, text="START", fg="red", command=self.zastav_hodiny)
         self.button.grid(row=10, column=4)
@@ -176,10 +204,12 @@ class App:
     	self.clock.config(text=self.formatuj_cas(self.cas_hra[0],self.cas_hra[1]))
 
 
+    # vrati cas ve tvaru string MM:SS
     def formatuj_cas(self,s,m):
 	c = '{:02d}'.format(m)+':'+'{:02d}'.format(s)
 	return c
 
+    # vrati cas ve tvaru string S1S@M!M@ pro zaslani na tablo
     def formatuj_cas_tablo(self,s,m):
 	cm = '{:02d}'.format(m)
 	cs = '{:02d}'.format(s)
@@ -187,59 +217,49 @@ class App:
 	return c
 
 
+    # dekrementuje cas trestu, inkrementuje cas hry
+    def uprav_cas(self,curcas):
+    	myLogger.debug('Upava casu : cas '+curcas) 
+	self.cas = curcas
+	if self.cas_hra[0] == 59:
+		self.cas_hra[0] = 0
+		if self.cas_hra[1] == 99:
+		    self.cas_hra[1] = 0
+		else:
+		    self.cas_hra[1] = self.cas_hra[1] + 1
+		
+	else:
+		self.cas_hra[0] = self.cas_hra[0] + 1
+	i = 7
+	while i > 0:
+		if (self.trest[i]+self.trest[i-1])>0:
+			if self.trest[i-1] > 0:
+				self.trest[i-1] = self.trest[i-1] - 1
+			else:
+				self.trest[i-1] = 59
+			if self.trest[i] > 0:
+				self.trest[i] = self.trest[i] - 1
+		i = i - 2  
+
     # posle data na tablo
     def send_s(self):
 	pass
 
 
     def tick(self):
-
         # get the current local time from the PC
         time2 = time.strftime('%S')
-	
-        # if time string has changed, update it
 	if self.cas_stop != 1:
+    	    # if time string has changed, update it
     	    if time2 != self.cas:
-        	self.cas = time2
-		if self.cas_hra[0] == 59:
-			self.cas_hra[0] = 0
-			if self.cas_hra[1] == 99:
-			    self.cas_hra[1] = 0
-			else:
-			    self.cas_hra[1] = self.cas_hra[1] + 1
-			
-		else:
-			self.cas_hra[0] = self.cas_hra[0] + 1
+		self.uprav_cas(time2)	# snizi cas o 1 sekundu
 		time4 = self.formatuj_cas(self.cas_hra[0],self.cas_hra[1])
 		self.clock.config(text=time4)
-		i = 7
-		while i > 0:
-			if (self.trest[i]+self.trest[i-1])>0:
-				if self.trest[i-1] > 0:
-					self.trest[i-1] = self.trest[i-1] - 1
-				else:
-					self.trest[i-1] = 59
-				if self.trest[i] > 0:
-					self.trest[i] = self.trest[i] - 1
-			i = i - 2  
 
     		self.trestA1.config(text=self.formatuj_cas(self.trest[0],self.trest[1]))
     		self.trestA2.config(text=self.formatuj_cas(self.trest[2],self.trest[3]))
     		self.trestB1.config(text=self.formatuj_cas(self.trest[4],self.trest[5]))
     		self.trestB2.config(text=self.formatuj_cas(self.trest[6],self.trest[7]))
-#SS32017C138047036015010
-#
-# obracene poradi znaku
-# C = clear - nezobrazi nic
-#SS SSMMHHDDHH111222333444S
-#
-#SS sekundy v obracenem poradi
-#MM minuty v obracenem poradi.
-#111 trest levy horni (domaci) MSS prvni znak na displeji neni
-#222 trest pravy horni (hoste) MSS
-#333 trest levy dolni (domaci) MSS
-#444 trest pravy dolni (hoste) MSS
-#S sirena  0 = stop 1 = start
 		cas = self.formatuj_cas_tablo(self.cas_hra[0],self.cas_hra[1])
 		stavA = '0C'
 		stavB = '0C'
@@ -250,7 +270,7 @@ class App:
 
 		s = 'SS'+ cas + stavA + stavB + trestA1 + trestB1 + trestA2 + trestB2 + '0' 
 		myLogger.debug('cas '+ s)
-		self.ser.send(s)
+		#self.ser.send(s)
 
 
 	# posle aktualni stav na TABLO
