@@ -114,7 +114,7 @@ class SkoreButton(Button):
 
 class App:
 
-    skoreA = 0
+    skoreA = 0	#skore
     skoreB = 0
 
     cas = ''		# posledni cas - skutecne hodiny - pouze sekundy
