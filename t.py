@@ -52,7 +52,7 @@ class SerialPort():
         try:
             self.ser.open()
         except:
-            myLogger.error("error open serial port: " + str(e))
+            myLogger.error("error open serial port: ")
         #    exit()
 
 
@@ -327,11 +327,15 @@ class App:
                     self.trestB1.config(text=self.formatuj_cas(self.btB1.cass,self.btB1.casm))
                     self.trestB2.config(text=self.formatuj_cas(self.btB2.cass,self.btB2.casm))
 
-        tout = 'SS' + self.formatuj_cas_tablo(self.cas_hra[0],self.cas_hra[1]) + self.formatuj_stav_tablo() + \
+        tout = 'SS' + \
+                self.formatuj_cas_tablo(self.cas_hra[0],self.cas_hra[1]) + \
+                self.formatuj_stav_tablo() + \
                 self.formatuj_trest_tablo(self.btA1.cass,self.btA1.casm) + \
                 self.formatuj_trest_tablo(self.btA2.cass, self.btA2.casm) +\
                 self.formatuj_trest_tablo(self.btB1.cass,self.btB1.casm) + \
-                self.formatuj_trest_tablo(self.btB2.cass, self.btB2.casm) + str(self.sirena)
+                self.formatuj_trest_tablo(self.btB2.cass, self.btB2.casm) + \
+                str(self.sirena)
+        
         self.tablo = tout
         myLogger.debug('data na tablo : ' + self.tablo)
         if self.noSerial == 0: 
