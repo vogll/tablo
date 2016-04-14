@@ -58,15 +58,19 @@ class SerialPort():
 
     def send(self,data):
 
+        myLogger.debug("try write data: " + data)
+
         if self.ser.isOpen():
             try:
-                self.ser.flushInput()        # flush input buffer, discarding all its contents
-                self.ser.flushOutput()        # flush output buffer, aborting current output
+                #self.ser.flushInput()        # flush input buffer, discarding all its contents
+                #self.ser.flushOutput()        # flush output buffer, aborting current output
                                             # and discard all that is in buffer
                 #write data
+                if(type(data) == type('String')):
+                    data = bytearray(data,'ascii')
                 self.ser.write(data)
                 myLogger.debug("write data: " + data)
-                time.sleep(0.5)          # give the serial port sometime to receive the data
+                #time.sleep(0.5)          # give the serial port sometime to receive the data
                 numOfLines = 0
         #        while True:
         #                response = self.ser.readline()
@@ -76,7 +80,7 @@ class SerialPort():
         #                    break
         #        self.ser.close()
             except:
-                myLogger.error("error communicating...: " + str(e1))
+                myLogger.error("error communicating...: ")
 
         else:
             myLogger.error("cannot open serial port ")
@@ -162,9 +166,9 @@ class App:
     tablo_start = 'SS000C0C0CCCCCCCCCCCCC0'    # defaultni retezec
     tablo_8 = 'SS888888888888888888880'        # test segmentu
     tablo = ''            # retezec ktery se posle na tablo
-
+    
     sirena = 0
-
+    zvuk = 0    # pomocna promenna dekrementuje se s kadym tickem (200ms), pokud je pustena sirena
     bsA = 0     # buton stav A
     bsB = 0     # button stav B
 
@@ -173,8 +177,8 @@ class App:
 
     def __init__(self, master,cas_hra=[0,0]):
 
-        if self.noSerial == 0:
-            self.ser = SerialPort()
+#        if self.noSerial == 0:
+        self.ser = SerialPort()
 
         self.tablo = self.tablo_start
         self.cas_hra = cas_hra        # cas v sekundach od zacatku hry
@@ -290,6 +294,18 @@ class App:
                 self.btB2.cass = 59
                 if self.btB2.casm > 0:
                     self.btB2.casm = self.btB2.casm - 1
+        if self.sirena == 1:
+            if self.zvuk == 0:
+                 self.sirena = 0
+
+        if self.zvuk > 0:
+            self.zvuk = self.zvuk - 1        
+
+        if self.cas_hra[0] == 10:
+            if self.sirena == 0:
+                self.zvuk = 5
+                self.sirena = 1
+
 
     # posle data na tablo
     def send_s(self):
@@ -318,7 +334,8 @@ class App:
                 self.formatuj_trest_tablo(self.btB2.cass, self.btB2.casm) + str(self.sirena)
         self.tablo = tout
         myLogger.debug('data na tablo : ' + self.tablo)
-        if self.noSerial == 0: self.ser.send(s)
+        if self.noSerial == 0: 
+                self.ser.send(self.tablo)
 
         # calls itself every 200 milliseconds
         # to update the time display as needed
@@ -327,7 +344,7 @@ class App:
 
 
     def zastav_hodiny(self):
-        # rozbehnuti
+        # rozbehnuti/
         if self.cas_stop != 0:
             self.cas_stop = 0
             self.button.config(text="STOP")
