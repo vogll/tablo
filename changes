@@ -1,0 +1,7 @@
+- instalace tkinter
+    apt-get install python3-tk
+- instalace podpory serioveho portu 
+    apt-get install python3-serial
+
+#    apt-get install python-pip
+#    pip install pyserial
