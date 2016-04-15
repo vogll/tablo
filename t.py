@@ -16,7 +16,7 @@
 
 
 from tkinter import *
-import time, serial, logging, logging.config
+import time, serial, logging, logging.config, os
 
 # tlacitko skore
 # ma dva Buttony (up, down)
@@ -217,7 +217,7 @@ class App:
     cas_stop = 1
     cas = ''        # posledni cas - skutecne hodiny - pouze sekundy
     cas_hra_default = [20,0]
-    cas_hra = [0,0]    
+    cas_hra = [0,0] # sekundy,minuty
 
     rezim = 1       # 1 = ukazatel casu hry, 0 = hodiny
 
@@ -382,8 +382,24 @@ class App:
             self.cas_hra[0] = 0
             self.cas_hra[1] = 0
 
+            self.btA1.cass = 0
+            self.btA1.casm = 0
+            self.btA2.cass = 0
+            self.btA2.casm = 0
+            self.btB1.cass = 0
+            self.btB1.casm = 0
+            self.btB2.cass = 0
+            self.btB2.casm = 0
+
+
             time5 = self.formatuj_cas(self.cas_hra[0], self.cas_hra[1])
             self.clock.config(text=time5)
+
+            self.trestA1.config(text=self.formatuj_cas(self.btA1.cass, self.btA1.casm))
+            self.trestA2.config(text=self.formatuj_cas(self.btA2.cass, self.btA2.casm))
+            self.trestB1.config(text=self.formatuj_cas(self.btB1.cass, self.btB1.casm))
+            self.trestB2.config(text=self.formatuj_cas(self.btB2.cass, self.btB2.casm))
+
             self.status.config(text="Hodiny vynulovány ...")
         else:
             self.status.config(text="Nelze nulovat ! Nejprve zastav čas.")
@@ -401,9 +417,12 @@ class App:
         return c
 
     def formatuj_trest_tablo(self,s,m):
-        cm = format(m)
-        cs = '{:02d}'.format(s)
-        c = cs[1]+cs[0]+cm[0]
+        if m == 0 and s == 0:
+            c = 'CCC'
+        else:
+            cm = format(m)
+            cs = '{:02d}'.format(s)
+            c = cs[1]+cs[0]+cm[0]
         return c
 
     def formatuj_stav_tablo(self):
@@ -413,60 +432,71 @@ class App:
 
     # dekrementuje cas trestu, inkrementuje cas hry
     def uprav_cas(self,curcas):
-        myLogger.debug('Upava casu : cas '+curcas) 
+        myLogger.debug('Upava casu : cas na svetovych hodinach v sekundach '+curcas)
         self.cas = curcas
-        if self.cas_hra[0] == 59:
-            self.cas_hra[0] = 0
-            if self.cas_hra[1] == 99:
-                self.cas_hra[1] = 0
-            else:
-                self.cas_hra[1] = self.cas_hra[1] + 1
 
-        else:
-            self.cas_hra[0] = self.cas_hra[0] + 1
+        if self.sirena == 0:
 
-        if self.btA1.cass + self.btA1.casm > 0:
-            if self.btA1.cass > 0:
-                self.btA1.cass = self.btA1.cass - 1
-            else:
-                self.btA1.cass = 59
-                if self.btA1.casm > 0:
-                    self.btA1.casm = self.btA1.casm - 1
+            if self.cas_hra[0] == 59:
+                self.cas_hra[0] = 0
+                if self.cas_hra[1] == 99:
+                    self.cas_hra[1] = 0
+                else:
+                    self.cas_hra[1] = self.cas_hra[1] + 1
 
-        if self.btA2.cass + self.btA2.casm > 0:
-            if self.btA2.cass > 0:
-                self.btA2.cass = self.btA2.cass - 1
             else:
-                self.btA2.cass = 59
-                if self.btA2.casm > 0:
-                    self.btA2.casm = self.btA2.casm - 1
+                self.cas_hra[0] = self.cas_hra[0] + 1
 
-        if self.btB1.cass + self.btB1.casm > 0:
-            if self.btB1.cass > 0:
-                self.btB1.cass = self.btB1.cass - 1
-            else:
-                self.btB1.cass = 59
-                if self.btB1.casm > 0:
-                    self.btB1.casm = self.btB1.casm - 1
+            if self.btA1.cass + self.btA1.casm > 0:
+                if self.btA1.cass > 0:
+                    self.btA1.cass = self.btA1.cass - 1
+                else:
+                    self.btA1.cass = 59
+                    if self.btA1.casm > 0:
+                        self.btA1.casm = self.btA1.casm - 1
 
-        if self.btB2.cass + self.btB2.casm > 0:
-            if self.btB2.cass > 0:
-                self.btB2.cass = self.btB2.cass - 1
-            else:
-                self.btB2.cass = 59
-                if self.btB2.casm > 0:
-                    self.btB2.casm = self.btB2.casm - 1
+            if self.btA2.cass + self.btA2.casm > 0:
+                if self.btA2.cass > 0:
+                    self.btA2.cass = self.btA2.cass - 1
+                else:
+                    self.btA2.cass = 59
+                    if self.btA2.casm > 0:
+                        self.btA2.casm = self.btA2.casm - 1
+
+            if self.btB1.cass + self.btB1.casm > 0:
+                if self.btB1.cass > 0:
+                    self.btB1.cass = self.btB1.cass - 1
+                else:
+                    self.btB1.cass = 59
+                    if self.btB1.casm > 0:
+                        self.btB1.casm = self.btB1.casm - 1
+
+            if self.btB2.cass + self.btB2.casm > 0:
+                if self.btB2.cass > 0:
+                    self.btB2.cass = self.btB2.cass - 1
+                else:
+                    self.btB2.cass = 59
+                    if self.btB2.casm > 0:
+                        self.btB2.casm = self.btB2.casm - 1
+
         if self.sirena == 1:
             if self.zvuk == 0:
-                 self.sirena = 0
+                # zasatv sirenu a bynuluj hodiny
+                self.sirena = 0
+                self.cas_stop = 1
+                self.vynuluj_cas()
+                self.status.config(text="Konec hry ...")
+                self.button.config(text="        START        ")
 
         if self.zvuk > 0:
             self.zvuk = self.zvuk - 1        
 
-        if self.cas_hra[0] == 10:
-            if self.sirena == 0:
-                self.zvuk = 5
-                self.sirena = 1
+        if self.rezim == 1:
+            if self.cas_hra[0] == self.btCasHry.cass:
+                if self.cas_hra[1] == self.btCasHry.casm:
+                    if self.sirena == 0:
+                        self.zvuk = 1
+                        self.sirena = 1
 
     # posle data na tablo
     def send_s(self):
@@ -530,6 +560,11 @@ class App:
         # calls itself every 200 milliseconds
         # to update the time display as needed
         # could use >200 ms, but display gets jerky
+
+        f.seek(0,0)
+        f.write(time2+'\n')
+        f.flush()
+        myLogger.debug('zapisuji data do souboru lock : ' + time2)
         self.clock.after(200, self.tick)
 
     def zastav_hodiny(self):
@@ -551,14 +586,35 @@ class App:
 
 if __name__=="__main__":
 
-    root = Tk()
-    root.resizable(0, 0)
-    root.title("Ovládání ukazatele")
     logging.config.fileConfig('log.ini')
     myLogger = logging.getLogger('root')
     myLogger.info('Start aplikace TABLO')
+
+
+    if os.path.exists('lock') == True:
+        f = open('lock', 'r')
+        s=f.read()
+        time.sleep(2)
+        f.seek(0, 0)
+        s1=f.read()
+        f.close()
+        if s == s1:
+            # soubor se zamkem existuje ale program nebezi
+            myLogger.info('Zamek je nastaven, ale jedna se o zombie')
+        else:
+            myLogger.info('Zamek je nastaven, a uz bezi jina instance s=<'+s+'> s1=<'+s1+'>')
+            exit()
+
+    f = open('lock','w')
+    f.write('1\n')
+    root = Tk()
+    root.resizable(0, 0)
+    root.title("Ovládání ukazatele")
     app = App(root)
     app.tick()
     root.mainloop()
     logging.shutdown()
+    f.close()
+    os.remove('lock')
+
 
